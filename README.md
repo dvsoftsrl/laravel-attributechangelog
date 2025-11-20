@@ -9,19 +9,11 @@ This package keeps track of every attribute that changes on an Eloquent model by
 
 ## Features
 
-- Automatically listen to the `created`/`updated` events (customizable via `$recordEvents`)
-- Persist each mutated attribute as a separate log entry with its `subject`, `causer`, `attribute`, and resolved `value`
-- Support relation attributes and JSON-path segments (e.g. `order.customer.name`, `payload->meta.inner`)
-- Expose fluent scopes for filtering by attribute, causer, date ranges, and subjects
-- Toggle logging per model and globally via `attributechangelog.enabled`
-
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-attributechangelog.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-attributechangelog)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+-   Automatically listen to the `created`/`updated` events (customizable via `$recordEvents`)
+-   Persist each mutated attribute as a separate log entry with its `subject`, `causer`, `attribute`, and resolved `value`
+-   Support relation attributes and JSON-path segments (e.g. `order.customer.name`, `payload->meta.inner`)
+-   Expose fluent scopes for filtering by attribute, causer, date ranges, and subjects
+-   Toggle logging per model and globally via `attributechangelog.enabled`
 
 ## Installation
 
@@ -114,8 +106,8 @@ Please review [our security policy](../../security/policy) on how to report secu
 
 ## Credits
 
-- [luca.dellorto](https://github.com/dvsoftsrl)
-- [All Contributors](../../contributors)
+-   [luca.dellorto](https://github.com/dvsoftsrl)
+-   [All Contributors](../../contributors)
 
 ## License
 
