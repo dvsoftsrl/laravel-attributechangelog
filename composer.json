@@ -1,17 +1,17 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "dvsoftsrl/laravel-attributechangelog",
+    "description": "Attribute change logger for eloquent models",
     "keywords": [
-        ":vendor_name",
+        "DV Soft",
         "laravel",
-        ":package_slug"
+        "laravel-attributechangelog"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/dvsoftsrl/laravel-attributechangelog",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "luca.dellorto",
+            "email": "luca.dellorto@dvsoft.it",
             "role": "Developer"
         }
     ],
@@ -35,13 +35,13 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "DvSoft\\AttributeChangeLog\\": "src/",
+            "DvSoft\\AttributeChangeLog\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "DvSoft\\AttributeChangeLog\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -63,10 +63,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "DvSoft\\AttributeChangeLog\\AttributeChangeLogServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "AttributeChangeLog": "DvSoft\\AttributeChangeLog\\Facades\\AttributeChangeLog"
             }
         }
     },
