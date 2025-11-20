@@ -5,6 +5,7 @@ namespace DvSoft\AttributeChangeLog\Traits;
 use Carbon\Carbon;
 use DvSoft\AttributeChangeLog\AttributeChangeLogServiceProvider;
 use DvSoft\AttributeChangeLog\AttributeChangeLogStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Arr;
@@ -41,13 +42,6 @@ trait LogsAttributeChange
     public function disableLogging(): self
     {
         $this->enableLoggingModelsEvents = false;
-
-        return $this;
-    }
-
-    public function enableLogging(): self
-    {
-        $this->enableLoggingModelsEvents = true;
 
         return $this;
     }
@@ -98,11 +92,19 @@ trait LogsAttributeChange
         return $this->morphMany(AttributeChangeLogServiceProvider::determineAttributeChangeLogModel(), 'subject');
     }
 
-    public function scopeEditedAttributeOn(string $attribute, Carbon $date)
+    public function lastAttributeChange(string $attribute)
     {
-        return $this->whereHas('attributeChangeLogs', function ($query) use ($attribute, $date) {
-            $query->forAttribute($attribute)
-                ->onDate($date);
+        return $this->attributeChangeLogs()
+            ->forAttribute($attribute)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public function scopeEditedAttributeOn(Builder $query, string $attribute, Carbon $date)
+    {
+        return $query->whereHas('attributeChangeLogs', function ($query) use ($attribute, $date) {
+            $query->attributeEditedOn($attribute, $date);
         });
     }
 
@@ -126,22 +128,20 @@ trait LogsAttributeChange
                 continue;
             }
 
+            if (Str::contains($attribute, '->')) {
+                $key = str_replace('->', '.', $attribute);
+
+                $changes[$key] = static::getModelAttributeJsonValue($model, $attribute);
+
+                continue;
+            }
+
             if (Str::contains($attribute, '.')) {
                 $relatedChanges = self::getRelatedModelAttributeValue($model, $attribute);
 
                 if (! empty($relatedChanges)) {
                     $changes += $relatedChanges;
                 }
-
-                continue;
-            }
-
-            if (Str::contains($attribute, '->')) {
-                Arr::set(
-                    $changes,
-                    str_replace('->', '.', $attribute),
-                    static::getModelAttributeJsonValue($model, $attribute)
-                );
 
                 continue;
             }
@@ -178,10 +178,6 @@ trait LogsAttributeChange
         }
 
         foreach (static::possibleRelationForeignKeys($relation) as $key) {
-            if ($key === '') {
-                continue;
-            }
-
             if (array_key_exists($key, $dirty)) {
                 return true;
             }
@@ -222,6 +218,7 @@ trait LogsAttributeChange
             if ($causer) {
                 $log->causer()->associate($causer);
             }
+            $log->created_at = $log->freshTimestamp();
             $log->save();
         }
     }

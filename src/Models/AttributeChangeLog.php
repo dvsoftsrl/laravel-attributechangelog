@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class AttributeChangeLog extends Model implements AttributeChangeLogContract
 {
     public $guarded = [];
+    public $timestamps = false;
 
     protected $dataTypes = ['boolean', 'integer', 'double', 'float', 'string', 'NULL'];
 

@@ -8,16 +8,25 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::connection(config('activitylog.database_connection'))->create(config('activitylog.table_name'), function (Blueprint $table) {
-            $table->id();
+        $tableName = config('attributechangelog.table_name');
+        $connection = config('attributechangelog.database_connection') ?? config('database.default');
 
-            $table->ulidMorphs('subject');
-            $table->nullableMorphs('subject', 'subject');
-            $table->nullableMorphs('causer', 'causer');
+        Schema::connection($connection)->create($tableName, function (Blueprint $table) {
+            $table->id();
+            $table->morphs('subject');
+            $table->nullableMorphs('causer');
             $table->string('attribute');
             $table->string('type')->nullable();
             $table->text('value')->nullable();
             $table->timestamp('created_at')->useCurrent();
         });
+    }
+    
+    public function down()
+    {
+        $tableName = config('attributechangelog.table_name');
+        $connection = config('attributechangelog.database_connection') ?? config('database.default');
+
+        Schema::connection($connection)->dropIfExists($tableName);
     }
 };

@@ -27,7 +27,7 @@ class AttributeChangeLogServiceProvider extends PackageServiceProvider
 
     public static function determineAttributeChangeLogModel(): string
     {
-        $attributeChangeModel = config('activitylog.activity_model') ?? AttributeChangeLogModel::class;
+        $attributeChangeModel = config('attributechangelog.attribute_change_log_model') ?? AttributeChangeLogModel::class;
 
         if (! is_a($attributeChangeModel, AttributeChangeLog::class, true)
             || ! is_a($attributeChangeModel, Model::class, true)) {
