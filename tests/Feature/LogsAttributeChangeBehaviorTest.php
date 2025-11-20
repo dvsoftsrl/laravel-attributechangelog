@@ -2,13 +2,13 @@
 
 namespace DvSoft\AttributeChangeLog\Tests\Feature;
 
+use DvSoft\AttributeChangeLog\AttributeChangeLogStatus;
 use DvSoft\AttributeChangeLog\Models\AttributeChangeLog;
 use DvSoft\AttributeChangeLog\Tests\Models\Actor;
 use DvSoft\AttributeChangeLog\Tests\Models\CauserIntervention;
-use DvSoft\AttributeChangeLog\Tests\Models\LoggingSubsetIntervention;
 use DvSoft\AttributeChangeLog\Tests\Models\EmptyAttributesIntervention;
 use DvSoft\AttributeChangeLog\Tests\Models\Intervention;
-use DvSoft\AttributeChangeLog\AttributeChangeLogStatus;
+use DvSoft\AttributeChangeLog\Tests\Models\LoggingSubsetIntervention;
 
 it('respects custom attributesToBeLogged definitions', function () {
     $model = LoggingSubsetIntervention::create([

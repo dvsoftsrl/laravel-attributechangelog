@@ -2,11 +2,11 @@
 
 namespace DvSoft\AttributeChangeLog\Tests;
 
+use DvSoft\AttributeChangeLog\AttributeChangeLogServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
-use DvSoft\AttributeChangeLog\AttributeChangeLogServiceProvider;
 
 class TestCase extends Orchestra
 {

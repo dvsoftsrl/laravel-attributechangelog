@@ -4,7 +4,6 @@ namespace DvSoft\AttributeChangeLog\Tests\Models;
 
 class RelationIntervention extends Intervention
 {
-
     protected static $attributesToBeLogged = [
         'partner.name',
     ];

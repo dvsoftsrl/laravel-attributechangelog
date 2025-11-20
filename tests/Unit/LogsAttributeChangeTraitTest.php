@@ -3,16 +3,15 @@
 namespace DvSoft\AttributeChangeLog\Tests\Unit;
 
 use DvSoft\AttributeChangeLog\Tests\Helpers\LogsAttributeChangeSpy;
-use Illuminate\Database\Eloquent\Model;
 
 it('always records when the event is created', function () {
-    $model = new LogsAttributeChangeSpy();
+    $model = new LogsAttributeChangeSpy;
 
     expect(LogsAttributeChangeSpy::shouldRecordPublic($model, 'name', [], 'created'))->toBeTrue();
 });
 
 it('records json keys when the root attribute is dirty', function () {
-    $model = new LogsAttributeChangeSpy();
+    $model = new LogsAttributeChangeSpy;
 
     $dirty = ['payload' => ['inner' => 'value']];
 
@@ -20,7 +19,7 @@ it('records json keys when the root attribute is dirty', function () {
 });
 
 it('records relation attributes when the foreign key changed', function () {
-    $model = new LogsAttributeChangeSpy();
+    $model = new LogsAttributeChangeSpy;
 
     $dirty = ['partner_id' => 2];
 
@@ -30,14 +29,14 @@ it('records relation attributes when the foreign key changed', function () {
 });
 
 it('detects relation attribute change when relation key is dirty', function () {
-    $model = new LogsAttributeChangeSpy();
+    $model = new LogsAttributeChangeSpy;
     $dirty = ['partner' => 5];
 
     expect(LogsAttributeChangeSpy::relationAttributeChangedPublic('partner', $dirty))->toBeTrue();
 });
 
 it('does not record when the attribute is not dirty', function () {
-    $model = new LogsAttributeChangeSpy();
+    $model = new LogsAttributeChangeSpy;
 
     expect(LogsAttributeChangeSpy::shouldRecordPublic($model, 'name', [], 'updated'))->toBeFalse();
 });
@@ -49,7 +48,7 @@ it('returns false when no relation keys are dirty', function () {
 it('respects custom record events', function () {
     LogsAttributeChangeSpy::setRecordEvents(['updated']);
 
-    $model = new LogsAttributeChangeSpy();
+    $model = new LogsAttributeChangeSpy;
 
     expect($model->shouldLogEventPublic('created'))->toBeFalse();
     expect($model->shouldLogEventPublic('updated'))->toBeTrue();

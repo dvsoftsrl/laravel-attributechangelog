@@ -3,10 +3,10 @@
 namespace DvSoft\AttributeChangeLog\Tests\Feature;
 
 use DvSoft\AttributeChangeLog\Models\AttributeChangeLog;
+use DvSoft\AttributeChangeLog\Tests\Models\Intervention;
 use DvSoft\AttributeChangeLog\Tests\Models\JsonIntervention;
 use DvSoft\AttributeChangeLog\Tests\Models\Partner;
 use DvSoft\AttributeChangeLog\Tests\Models\RelationIntervention;
-use DvSoft\AttributeChangeLog\Tests\Models\Intervention;
 
 it('records nested json attribute segments', function () {
     $model = JsonIntervention::create([

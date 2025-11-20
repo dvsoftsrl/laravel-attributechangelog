@@ -4,11 +4,11 @@ namespace DvSoft\AttributeChangeLog\Tests\Unit;
 
 use Carbon\Carbon;
 use DvSoft\AttributeChangeLog\Models\AttributeChangeLog;
-use DvSoft\AttributeChangeLog\Tests\Models\Intervention;
 use DvSoft\AttributeChangeLog\Tests\Models\Actor;
+use DvSoft\AttributeChangeLog\Tests\Models\Intervention;
 
 it('casts values of different types', function () {
-    $log = new AttributeChangeLog();
+    $log = new AttributeChangeLog;
 
     $log->value = ['foo' => 'bar'];
     expect($log->type)->toBe('array');
