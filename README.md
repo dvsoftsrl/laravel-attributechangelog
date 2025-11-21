@@ -13,7 +13,6 @@ This package keeps track of every attribute that changes on an Eloquent model by
 -   Persist each mutated attribute as a separate log entry with its `subject`, `causer`, `attribute`, and resolved `value`
 -   Support relation attributes and JSON-path segments (e.g. `order.customer.name`, `payload->meta.inner`)
 -   Expose fluent scopes for filtering by attribute, causer, date ranges, and subjects
--   Toggle logging per model and globally via `attributechangelog.enabled`
 
 ## Installation
 
@@ -26,14 +25,21 @@ composer require dvsoftsrl/laravel-attributechangelog
 You can publish and run the migrations with:
 
 ```bash
-php artisan vendor:publish --tag="laravel-attributechangelog-migrations"
+php artisan vendor:publish --provider="DvSoft\AttributeChangeLog\AttributeChangeLogServiceProvider" --tag="laravel-attributechangelog-migrations"
+```
+
+_Note_: The default migration assumes you are using integers for your model IDs. If you are using UUIDs, or some other format, adjust the format of the `subject_id` and `causer_id` fields in the published migration before continuing.
+
+After publishing the migration you can create the `activity_log` table by running the migrations:
+
+```bash
 php artisan migrate
 ```
 
 You can publish the config file with:
 
 ```bash
-php artisan vendor:publish --tag="laravel-attributechangelog-config"
+php artisan vendor:publish --provider="DvSoft\AttributeChangeLog\AttributeChangeLogServiceProvider" --tag="laravel-attributechangelog-config"
 ```
 
 This is the contents of the published config file:
@@ -96,17 +102,14 @@ composer test
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
 
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
 ## Security Vulnerabilities
 
 Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
 
 ## Credits
 
--   [luca.dellorto](https://github.com/dvsoftsrl)
+-   [Luca Dell'Orto](https://github.com/luca-dellorto)
+-   [Stefano Vergani](https://github.com/stefano-vergani)
 -   [All Contributors](../../contributors)
 
 ## License
