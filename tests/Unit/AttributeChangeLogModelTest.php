@@ -4,6 +4,7 @@ namespace DvSoft\AttributeChangeLog\Tests\Unit;
 
 use Carbon\Carbon;
 use DvSoft\AttributeChangeLog\Models\AttributeChangeLog;
+use DvSoft\AttributeChangeLog\Tests\Helpers\StatusDto;
 use DvSoft\AttributeChangeLog\Tests\Models\Actor;
 use DvSoft\AttributeChangeLog\Tests\Models\Intervention;
 
@@ -94,4 +95,40 @@ it('filters logs by causer', function () {
     ]);
 
     expect(AttributeChangeLog::causedBy($actor)->count())->toBe(1);
+});
+
+it('rehydrates serialized objects when the class exists', function () {
+    $log = new AttributeChangeLog;
+    $dto = new StatusDto('persisted');
+
+    $log->value = $dto;
+
+    expect($log->type)->toBe('object');
+    expect($log->value_class)->toBe(StatusDto::class);
+    expect($log->value)->toBeInstanceOf(StatusDto::class);
+    expect($log->value->equals($dto))->toBeTrue();
+});
+
+it('falls back to json decoding when no class metadata exists', function () {
+    $log = new AttributeChangeLog;
+
+    $log->setRawAttributes([
+        'type' => 'object',
+        'value_class' => null,
+        'value' => json_encode(['fallback' => 'value']),
+    ], true);
+
+    expect($log->value)->toMatchObject((object) ['fallback' => 'value']);
+});
+
+it('falls back to json decoding when the class is unavailable', function () {
+    $log = new AttributeChangeLog;
+
+    $log->setRawAttributes([
+        'type' => 'object',
+        'value_class' => 'Some\\Missing\\Class',
+        'value' => json_encode(['missing' => 'class']),
+    ], true);
+
+    expect($log->value)->toMatchObject((object) ['missing' => 'class']);
 });

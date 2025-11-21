@@ -101,21 +101,31 @@ class AttributeChangeLog extends Model implements AttributeChangeLogContract
      */
     public function setValueAttribute($value)
     {
+        $this->attributes['value_class'] = null;
+
         $type = gettype($value);
 
         if (is_array($value)) {
             $this->type = 'array';
             $this->attributes['value'] = json_encode($value);
-        } elseif ($value instanceof DateTime) {
+            return;
+        }
+
+        if ($value instanceof DateTime) {
             $this->type = 'datetime';
             $this->attributes['value'] = $this->fromDateTime($value);
-        } elseif (is_object($value)) {
-            $this->type = 'object';
-            $this->attributes['value'] = json_encode($value);
-        } else {
-            $this->type = in_array($type, $this->dataTypes) ? $type : 'string';
-            $this->attributes['value'] = $value;
+            return;
         }
+
+        if (is_object($value)) {
+            $this->type = 'object';
+            $this->attributes['value'] = serialize($value);
+            $this->attributes['value_class'] = get_class($value);
+            return;
+        }
+
+        $this->type = in_array($type, $this->dataTypes) ? $type : 'string';
+        $this->attributes['value'] = $value;
     }
 
     public function getValueAttribute($value)
@@ -126,7 +136,7 @@ class AttributeChangeLog extends Model implements AttributeChangeLogContract
             case 'array':
                 return json_decode($value, true);
             case 'object':
-                return json_decode($value);
+                return $this->castObjectValue($value);
             case 'datetime':
                 return $this->asDateTime($value);
         }
@@ -136,5 +146,31 @@ class AttributeChangeLog extends Model implements AttributeChangeLogContract
         }
 
         return $value;
+    }
+
+    protected function castObjectValue(string $value): mixed
+    {
+        if ($object = $this->unserializeObjectValue($value)) {
+            return $object;
+        }
+
+        return json_decode($value);
+    }
+
+    protected function unserializeObjectValue(string $value): ?object
+    {
+        $valueClass = $this->value_class;
+
+        if (! $valueClass || ! class_exists($valueClass)) {
+            return null;
+        }
+
+        $object = @unserialize($value);
+
+        if ($object instanceof $valueClass) {
+            return $object;
+        }
+
+        return null;
     }
 }

@@ -89,6 +89,7 @@ class TestCase extends Orchestra
             $table->nullableMorphs('causer');
             $table->string('attribute');
             $table->string('type')->nullable();
+            $table->string('value_class')->nullable();
             $table->text('value')->nullable();
             $table->timestamp('created_at')->useCurrent();
         });
