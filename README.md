@@ -25,7 +25,7 @@ composer require dvsoftsrl/laravel-attributechangelog
 You can publish and run the migrations with:
 
 ```bash
-php artisan vendor:publish --provider="DvSoft\AttributeChangeLog\AttributeChangeLogServiceProvider" --tag="laravel-attributechangelog-migrations"
+php artisan vendor:publish --provider="DvSoft\AttributeChangeLog\AttributeChangeLogServiceProvider" --tag="attributechangelog-migrations"
 ```
 
 _Note_: The default migration assumes you are using integers for your model IDs. If you are using UUIDs, or some other format, adjust the format of the `subject_id` and `causer_id` fields in the published migration before continuing.
@@ -39,7 +39,7 @@ php artisan migrate
 You can publish the config file with:
 
 ```bash
-php artisan vendor:publish --provider="DvSoft\AttributeChangeLog\AttributeChangeLogServiceProvider" --tag="laravel-attributechangelog-config"
+php artisan vendor:publish --provider="DvSoft\AttributeChangeLog\AttributeChangeLogServiceProvider" --tag="attributechangelog-config"
 ```
 
 This is the contents of the published config file:
@@ -55,19 +55,13 @@ return [
 
 You can override the log model (must implement `DvSoft\AttributeChangeLog\Contracts\AttributeChangeLog`) or change the table/connection before running the migrations.
 
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="laravel-attributechangelog-views"
-```
-
 ## Usage
 
 ```php
 use DvSoft\AttributeChangeLog\Traits\LogsAttributeChange;
 use Illuminate\Database\Eloquent\Model;
 
-class Intervention extends Model
+class MyModel extends Model
 {
     use LogsAttributeChange;
 
@@ -78,16 +72,16 @@ class Intervention extends Model
 The trait will listen for the configured events and write one `AttributeChangeLog` row per attribute. Each log entry records the current value, root subject, optional JSON path, and optional `causer`. You can customize which attributes should be watched by overriding `$attributesToBeLogged`.
 
 ```php
-$intervention = Intervention::find(1);
-$intervention->status = 'published';
-$intervention->save();
+$myModel = MyModel::find(1);
+$myModel->status = 'published';
+$myModel->save();
 
-$lastStatusChange = $intervention->attributeChangeLogs()
+$lastStatusChange = $myModel->attributeChangeLogs()
     ->forAttribute('status')
     ->latest('created_at')
     ->first();
 
-$yesterdayLogs = Intervention::editedAttributeOn('status', today()->subDay())->get();
+$yesterdayLogs = MyModel::editedAttributeOn('status', today()->subDay())->get();
 ```
 
 Models that need to act as causers can use `DvSoft\AttributeChangeLog\Traits\CausesActivity` to expose the inverse morph relationship.
