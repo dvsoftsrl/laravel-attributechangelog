@@ -108,12 +108,14 @@ class AttributeChangeLog extends Model implements AttributeChangeLogContract
         if (is_array($value)) {
             $this->type = 'array';
             $this->attributes['value'] = json_encode($value);
+
             return;
         }
 
         if ($value instanceof DateTime) {
             $this->type = 'datetime';
             $this->attributes['value'] = $this->fromDateTime($value);
+
             return;
         }
 
@@ -121,6 +123,7 @@ class AttributeChangeLog extends Model implements AttributeChangeLogContract
             $this->type = 'object';
             $this->attributes['value'] = serialize($value);
             $this->attributes['value_class'] = get_class($value);
+
             return;
         }
 

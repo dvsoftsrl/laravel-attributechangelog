@@ -2,8 +2,8 @@
 
 namespace DvSoft\AttributeChangeLog\Tests\Models;
 
-use DvSoft\AttributeChangeLog\Traits\LogsAttributeChange;
 use DvSoft\AttributeChangeLog\Tests\Helpers\StatusDtoCast;
+use DvSoft\AttributeChangeLog\Traits\LogsAttributeChange;
 use Illuminate\Database\Eloquent\Model;
 
 class DtoIntervention extends Model

@@ -6,9 +6,7 @@ use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 
 class StatusDto
 {
-    public function __construct(private string $value)
-    {
-    }
+    public function __construct(private string $value) {}
 
     public function value(): string
     {
