@@ -69,7 +69,7 @@ class MyModel extends Model
 }
 ```
 
-The trait will listen for the configured events and write one `AttributeChangeLog` row per attribute. Each log entry records the current value, root subject, optional JSON path, and optional `causer`. You can customize which attributes should be watched by overriding `$attributesToBeLogged`.
+The trait listens for the configured events, writes one `AttributeChangeLog` row per attribute, and records the current value, root subject, optional JSON path, and optional `causer`. You can customize which attributes should be watched by overriding `$attributesToBeLogged`. When you record objects (for example, DTOs returned by custom casts) the log now keeps the original class plus a serialized payload so reading the entry returns the same object instance it stored.
 
 ```php
 $myModel = MyModel::find(1);

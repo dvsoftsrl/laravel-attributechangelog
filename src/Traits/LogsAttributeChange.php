@@ -19,14 +19,14 @@ trait LogsAttributeChange
 
     public static function bootLogsAttributeChange(): void
     {
-        static::eventsToBeRecorded()->each(function ($eventName) {
+        static::attributeChangeEventsToRecord()->each(function ($eventName) {
             static::$eventName(function (Model $model) use ($eventName) {
 
-                if (! $model->shouldLogEvent($eventName)) {
+                if (! $model->shouldLogAttributeChangeEvent($eventName)) {
                     return;
                 }
 
-                $changes = $model->attributeValuesToBeLogged($eventName);
+                $changes = $model->attributeValuesToRecord($eventName);
 
                 if (empty($changes)) {
                     return;
@@ -37,21 +37,21 @@ trait LogsAttributeChange
         });
     }
 
-    public function disableLogging(): self
+    public function disableAttributesLogging(): self
     {
         $this->enableLoggingModelsEvents = false;
 
         return $this;
     }
 
-    public function enableLogging(): self
+    public function enableAttributesLogging(): self
     {
         $this->enableLoggingModelsEvents = true;
 
         return $this;
     }
 
-    public function activities(): MorphMany
+    public function attributeChangeActivities(): MorphMany
     {
         return $this->morphMany(AttributeChangeLogServiceProvider::determineAttributeChangeLogModel(), 'subject');
     }
@@ -59,7 +59,7 @@ trait LogsAttributeChange
     /**
      * Get the event names that should be recorded.
      **/
-    protected static function eventsToBeRecorded(): Collection
+    protected static function attributeChangeEventsToRecord(): Collection
     {
         if (isset(static::$recordEvents)) {
             return collect(static::$recordEvents);
@@ -71,7 +71,7 @@ trait LogsAttributeChange
         ]);
     }
 
-    protected function shouldLogEvent(string $eventName): bool
+    protected function shouldLogAttributeChangeEvent(string $eventName): bool
     {
         $logStatus = app(AttributeChangeLogStatus::class);
 
@@ -79,17 +79,17 @@ trait LogsAttributeChange
             return false;
         }
 
-        return static::eventsToBeRecorded()->contains($eventName);
+        return static::attributeChangeEventsToRecord()->contains($eventName);
     }
 
-    public function attributeValuesToBeLogged(string $processingEvent): array
+    public function attributeValuesToRecord(string $processingEvent): array
     {
         // no loggable attributes, no values to be logged!
-        if (! count($this->attributesToBeLogged())) {
+        if (! count($this->attributesToRecord())) {
             return [];
         }
 
-        return static::logChanges($this, $processingEvent);
+        return static::collectAttributeChanges($this, $processingEvent);
     }
 
     public function attributeChangeLogs(): MorphMany
@@ -113,7 +113,7 @@ trait LogsAttributeChange
         });
     }
 
-    public function attributesToBeLogged(): array
+    public function attributesToRecord(): array
     {
         if (isset(static::$attributesToBeLogged)) {
             return static::$attributesToBeLogged;
@@ -122,10 +122,10 @@ trait LogsAttributeChange
         return $this->getFillable();
     }
 
-    public static function logChanges(Model $model, string $event): array
+    public static function collectAttributeChanges(Model $model, string $event): array
     {
         $changes = [];
-        $attributes = $model->attributesToBeLogged();
+        $attributes = $model->attributesToRecord();
         $dirty = $model->getChanges();
 
         foreach ($attributes as $attribute) {
@@ -136,13 +136,13 @@ trait LogsAttributeChange
             if (Str::contains($attribute, '->')) {
                 $key = str_replace('->', '.', $attribute);
 
-                $changes[$key] = static::getModelAttributeJsonValue($model, $attribute);
+                $changes[$key] = static::resolveModelJsonAttributeValue($model, $attribute);
 
                 continue;
             }
 
             if (Str::contains($attribute, '.')) {
-                $relatedChanges = self::getRelatedModelAttributeValue($model, $attribute);
+                $relatedChanges = self::resolveRelatedModelAttributeValues($model, $attribute);
 
                 if (! empty($relatedChanges)) {
                     $changes += $relatedChanges;
@@ -233,7 +233,7 @@ trait LogsAttributeChange
         return Auth::user();
     }
 
-    protected static function getRelatedModelAttributeValue(Model $model, string $attribute): array
+    protected static function resolveRelatedModelAttributeValues(Model $model, string $attribute): array
     {
         $relatedModelNames = explode('.', $attribute);
         $relatedAttribute = array_pop($relatedModelNames);
@@ -242,7 +242,7 @@ trait LogsAttributeChange
         $relatedModel = $model;
 
         do {
-            $attributeName[] = $relatedModelName = static::getRelatedModelRelationName($relatedModel, array_shift($relatedModelNames));
+            $attributeName[] = $relatedModelName = static::resolveRelatedModelRelationName($relatedModel, array_shift($relatedModelNames));
 
             $relatedModel = $relatedModel->$relatedModelName ?? $relatedModel->$relatedModelName();
         } while (! empty($relatedModelNames));
@@ -252,7 +252,7 @@ trait LogsAttributeChange
         return [implode('.', $attributeName) => $relatedModel->$relatedAttribute ?? null];
     }
 
-    protected static function getRelatedModelRelationName(Model $model, string $relation): string
+    protected static function resolveRelatedModelRelationName(Model $model, string $relation): string
     {
         return Arr::first([
             $relation,
@@ -263,7 +263,7 @@ trait LogsAttributeChange
         }, $relation);
     }
 
-    protected static function getModelAttributeJsonValue(Model $model, string $attribute): mixed
+    protected static function resolveModelJsonAttributeValue(Model $model, string $attribute): mixed
     {
         $path = explode('->', $attribute);
         $modelAttribute = array_shift($path);

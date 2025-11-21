@@ -51,5 +51,5 @@ it('exposes activities relation for the subject', function () {
         'status' => 'active',
     ]);
 
-    expect($model->activities()->count())->toBeGreaterThan(0);
+    expect($model->attributeChangeActivities()->count())->toBeGreaterThan(0);
 });

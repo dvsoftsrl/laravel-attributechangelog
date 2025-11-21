@@ -50,8 +50,8 @@ it('respects custom record events', function () {
 
     $model = new LogsAttributeChangeSpy;
 
-    expect($model->shouldLogEventPublic('created'))->toBeFalse();
-    expect($model->shouldLogEventPublic('updated'))->toBeTrue();
+    expect($model->shouldLogAttributeChangeEventPublic('created'))->toBeFalse();
+    expect($model->shouldLogAttributeChangeEventPublic('updated'))->toBeTrue();
 });
 
 afterEach(function () {

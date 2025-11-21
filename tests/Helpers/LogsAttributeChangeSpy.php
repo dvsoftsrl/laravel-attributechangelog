@@ -35,13 +35,13 @@ class LogsAttributeChangeSpy extends Intervention
         static::$recordEvents = [];
     }
 
-    public function shouldLogEventPublic(string $event): bool
+    public function shouldLogAttributeChangeEventPublic(string $event): bool
     {
-        return $this->shouldLogEvent($event);
+        return $this->shouldLogAttributeChangeEvent($event);
     }
 
     public static function recordEventsPublic(): Collection
     {
-        return static::eventsToBeRecorded();
+        return static::attributeChangeEventsToRecord();
     }
 }
