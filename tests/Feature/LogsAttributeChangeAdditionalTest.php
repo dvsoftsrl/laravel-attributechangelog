@@ -18,3 +18,18 @@ it('does not log updates when logging is disabled', function () {
 
     expect(AttributeChangeLog::count())->toBe(2);
 });
+
+it('does log updates when logging is enabled', function () {
+    $intervention = Intervention::make([
+        'name' => 'Gamma',
+        'status' => 'draft',
+    ]);
+    $intervention->disableLogging();
+    $intervention->save();
+    expect(AttributeChangeLog::count())->toBe(0);
+
+    $intervention->enableLogging();
+    $intervention->update(['name' => 'Delta']);
+
+    expect(AttributeChangeLog::count())->toBeGreaterThan(0);
+});

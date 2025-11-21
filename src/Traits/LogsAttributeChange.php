@@ -17,8 +17,6 @@ trait LogsAttributeChange
 {
     public bool $enableLoggingModelsEvents = true;
 
-    // protected array $attributesToBeLogged = [];
-
     public static function bootLogsAttributeChange(): void
     {
         static::eventsToBeRecorded()->each(function ($eventName) {
@@ -42,6 +40,13 @@ trait LogsAttributeChange
     public function disableLogging(): self
     {
         $this->enableLoggingModelsEvents = false;
+
+        return $this;
+    }
+
+    public function enableLogging(): self
+    {
+        $this->enableLoggingModelsEvents = true;
 
         return $this;
     }
