@@ -1,5 +1,7 @@
 <?php
 
+use DvSoft\AttributeChangeLog\Models\AttributeChangeLog;
+
 return [
 
     /*
@@ -12,7 +14,7 @@ return [
      * It should implement the DVSoft\AttributeChangeLog\Models\AttributeChangeLog interface
      * and extend Illuminate\Database\Eloquent\Model.
      */
-    'attribute_change_log_model' => \DvSoft\AttributeChangeLog\Models\AttributeChangeLog::class,
+    'attribute_change_log_model' => AttributeChangeLog::class,
 
     /*
      * This is the name of the table that will be created by the migration and
