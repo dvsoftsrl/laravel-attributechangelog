@@ -121,20 +121,20 @@ trait LogsAttributeChange
 
     public static function collectAttributeChanges(Model $model, string $event): array
     {
-        $changes    = [];
+        $changes = [];
         $attributes = $model->attributesToRecord();
-        $dirty      = $model->getChanges();
+        $dirty = $model->getChanges();
 
         foreach ($attributes as $attribute) {
             if (! static::shouldRecordAttributeChange($model, $attribute, $dirty, $event)) {
                 continue;
             }
 
-
             if (Str::contains($attribute, '->')) {
-                $key            = str_replace('->', '.', $attribute);
-                $value          = static::resolveModelJsonAttributeValue($model, $attribute);
-                $changes[$key]  = static::normalizeAttributeValue($value);
+                $key = str_replace('->', '.', $attribute);
+                $value = static::resolveModelJsonAttributeValue($model, $attribute);
+                $changes[$key] = static::normalizeAttributeValue($value);
+
                 continue;
             }
 
@@ -144,6 +144,7 @@ trait LogsAttributeChange
                 foreach ($relatedChanges as $k => $v) {
                     $changes[$k] = static::normalizeAttributeValue($v);
                 }
+
                 continue;
             }
 
@@ -165,25 +166,25 @@ trait LogsAttributeChange
             return $value;
         }
 
-//        if (is_object($value)) {
-//            if ($value instanceof \Illuminate\Contracts\Support\Arrayable) {
-//                return $value->toArray();
-//            }
-//
-//            if ($value instanceof JsonSerializable) {
-//                return $value->jsonSerialize();
-//            }
-//
-//            return $value;
-//        }
+        //        if (is_object($value)) {
+        //            if ($value instanceof \Illuminate\Contracts\Support\Arrayable) {
+        //                return $value->toArray();
+        //            }
+        //
+        //            if ($value instanceof JsonSerializable) {
+        //                return $value->jsonSerialize();
+        //            }
+        //
+        //            return $value;
+        //        }
 
         return $value;
     }
 
     protected static function shouldRecordAttributeChange(
-        Model  $model,
+        Model $model,
         string $attribute,
-        array  $dirty,
+        array $dirty,
         string $event
     ): bool {
         if ($event === 'created') {
@@ -196,6 +197,7 @@ trait LogsAttributeChange
 
         if (Str::contains($attributeKey, '.')) {
             $relation = Str::before($attributeKey, '.');
+
             return static::relationAttributeChanged($relation, $dirty);
         }
 
@@ -232,8 +234,7 @@ trait LogsAttributeChange
     protected function recordAttributeChanges(string $_event, array $changes): void
     {
         $attributeChangeLogModel = AttributeChangeLogServiceProvider::determineAttributeChangeLogModel();
-        $causer                  = $this->attributeChangeCauser();
-
+        $causer = $this->attributeChangeCauser();
 
         foreach ($changes as $attribute => $value) {
             $log = new $attributeChangeLogModel;
@@ -243,9 +244,9 @@ trait LogsAttributeChange
 
             $log->value = $value;
 
-//            $log->value = is_array($value) || is_object($value)
-//                ? json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-//                : $value;
+            //            $log->value = is_array($value) || is_object($value)
+            //                ? json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            //                : $value;
 
             if ($causer) {
                 $log->causer()->associate($causer);
@@ -264,15 +265,15 @@ trait LogsAttributeChange
     protected static function resolveRelatedModelAttributeValues(Model $model, string $attribute): array
     {
         $relatedModelNames = explode('.', $attribute);
-        $relatedAttribute  = array_pop($relatedModelNames);
+        $relatedAttribute = array_pop($relatedModelNames);
 
         $attributeName = [];
-        $relatedModel  = $model;
+        $relatedModel = $model;
 
         do {
-            $relationName    = static::resolveRelatedModelRelationName($model, array_shift($relatedModelNames));
+            $relationName = static::resolveRelatedModelRelationName($model, array_shift($relatedModelNames));
             $attributeName[] = $relationName;
-            $relatedModel    = $relatedModel->$relationName ?? $relatedModel->$relationName();
+            $relatedModel = $relatedModel->$relationName ?? $relatedModel->$relationName();
         } while (! empty($relatedModelNames));
 
         $attributeName[] = $relatedAttribute;
@@ -291,7 +292,7 @@ trait LogsAttributeChange
 
     protected static function resolveModelJsonAttributeValue(Model $model, string $attribute): mixed
     {
-        $path           = explode('->', $attribute);
+        $path = explode('->', $attribute);
         $modelAttribute = array_shift($path);
         $modelAttribute = collect($model->getAttribute($modelAttribute));
 
