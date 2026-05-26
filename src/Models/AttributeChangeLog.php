@@ -99,36 +99,51 @@ class AttributeChangeLog extends Model implements AttributeChangeLogContract
     /**
      * Set the value and type.
      */
-    public function setValueAttribute($value)
+    public function setValueAttribute($value): void
     {
         $this->attributes['value_class'] = null;
 
-        $type = gettype($value);
-
-        if (is_array($value)) {
-            $this->type = 'array';
-            $this->attributes['value'] = json_encode($value);
-
+        if (is_null($value) || is_scalar($value)) {
+            $type = gettype($value);
+            $this->type = in_array($type, $this->dataTypes) ? $type : 'string';
+            $this->attributes['value'] = $value;
             return;
         }
 
-        if ($value instanceof DateTime) {
+        if (is_array($value)) {
+            $this->type = 'array';
+            $this->attributes['value'] = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return;
+        }
+
+        if ($value instanceof \DateTime) {
             $this->type = 'datetime';
             $this->attributes['value'] = $this->fromDateTime($value);
-
             return;
         }
 
         if (is_object($value)) {
+            // Arrayable (Spatie Data, Laravel Collections, ecc.) → JSON
+            // NON semplice method_exists('toArray') per evitare falsi positivi
+            // su oggetti con proprietà private come StatusDto
+            if ($value instanceof \Illuminate\Contracts\Support\Arrayable) {
+                $this->type = 'array';
+                $this->attributes['value'] = json_encode(
+                    $value->toArray(),
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                );
+                return;
+            }
+
+            // Tutti gli altri oggetti (StatusDto, ecc.) → serialize + value_class
             $this->type = 'object';
             $this->attributes['value'] = serialize($value);
             $this->attributes['value_class'] = get_class($value);
-
             return;
         }
 
-        $this->type = in_array($type, $this->dataTypes) ? $type : 'string';
-        $this->attributes['value'] = $value;
+        $this->type = 'string';
+        $this->attributes['value'] = (string) $value;
     }
 
     public function getValueAttribute($value)

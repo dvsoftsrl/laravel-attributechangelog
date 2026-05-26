@@ -12,6 +12,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use JsonSerializable;
 
 trait LogsAttributeChange
 {
@@ -37,38 +38,56 @@ trait LogsAttributeChange
         });
     }
 
-    public function disableAttributesLogging(): self
+    public function disableAttributesLogging(): static
     {
         $this->enableLoggingModelsEvents = false;
 
         return $this;
     }
 
-    public function enableAttributesLogging(): self
+    public function enableAttributesLogging(): static
     {
         $this->enableLoggingModelsEvents = true;
 
         return $this;
     }
 
-    public function attributeChangeActivities(): MorphMany
+    public function attributeChangeLogs(): MorphMany
     {
-        return $this->morphMany(AttributeChangeLogServiceProvider::determineAttributeChangeLogModel(), 'subject');
+        return $this->morphMany(
+            AttributeChangeLogServiceProvider::determineAttributeChangeLogModel(),
+            'subject'
+        );
     }
 
-    /**
-     * Get the event names that should be recorded.
-     **/
+    public function attributeChangeActivities(): MorphMany
+    {
+        return $this->attributeChangeLogs();
+    }
+
+    public function lastAttributeChange(string $attribute)
+    {
+        return $this->attributeChangeLogs()
+            ->forAttribute($attribute)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public function scopeEditedAttributeOn(Builder $query, string $attribute, Carbon $date): Builder
+    {
+        return $query->whereHas('attributeChangeLogs', function (Builder $q) use ($attribute, $date) {
+            $q->attributeEditedOn($attribute, $date);
+        });
+    }
+
     protected static function attributeChangeEventsToRecord(): Collection
     {
         if (isset(static::$recordEvents)) {
             return collect(static::$recordEvents);
         }
 
-        return collect([
-            'created',
-            'updated',
-        ]);
+        return collect(['created', 'updated']);
     }
 
     protected function shouldLogAttributeChangeEvent(string $eventName): bool
@@ -82,37 +101,6 @@ trait LogsAttributeChange
         return static::attributeChangeEventsToRecord()->contains($eventName);
     }
 
-    public function attributeValuesToRecord(string $processingEvent): array
-    {
-        // no loggable attributes, no values to be logged!
-        if (! count($this->attributesToRecord())) {
-            return [];
-        }
-
-        return static::collectAttributeChanges($this, $processingEvent);
-    }
-
-    public function attributeChangeLogs(): MorphMany
-    {
-        return $this->morphMany(AttributeChangeLogServiceProvider::determineAttributeChangeLogModel(), 'subject');
-    }
-
-    public function lastAttributeChange(string $attribute)
-    {
-        return $this->attributeChangeLogs()
-            ->forAttribute($attribute)
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->first();
-    }
-
-    public function scopeEditedAttributeOn(Builder $query, string $attribute, Carbon $date)
-    {
-        return $query->whereHas('attributeChangeLogs', function ($query) use ($attribute, $date) {
-            $query->attributeEditedOn($attribute, $date);
-        });
-    }
-
     public function attributesToRecord(): array
     {
         if (isset(static::$attributesToBeLogged)) {
@@ -122,43 +110,82 @@ trait LogsAttributeChange
         return $this->getFillable();
     }
 
+    public function attributeValuesToRecord(string $processingEvent): array
+    {
+        if (! count($this->attributesToRecord())) {
+            return [];
+        }
+
+        return static::collectAttributeChanges($this, $processingEvent);
+    }
+
     public static function collectAttributeChanges(Model $model, string $event): array
     {
-        $changes = [];
+        $changes    = [];
         $attributes = $model->attributesToRecord();
-        $dirty = $model->getChanges();
+        $dirty      = $model->getChanges();
 
         foreach ($attributes as $attribute) {
             if (! static::shouldRecordAttributeChange($model, $attribute, $dirty, $event)) {
                 continue;
             }
 
+
             if (Str::contains($attribute, '->')) {
-                $key = str_replace('->', '.', $attribute);
-
-                $changes[$key] = static::resolveModelJsonAttributeValue($model, $attribute);
-
+                $key            = str_replace('->', '.', $attribute);
+                $value          = static::resolveModelJsonAttributeValue($model, $attribute);
+                $changes[$key]  = static::normalizeAttributeValue($value);
                 continue;
             }
 
             if (Str::contains($attribute, '.')) {
-                $relatedChanges = self::resolveRelatedModelAttributeValues($model, $attribute);
+                $relatedChanges = static::resolveRelatedModelAttributeValues($model, $attribute);
 
-                if (! empty($relatedChanges)) {
-                    $changes += $relatedChanges;
+                foreach ($relatedChanges as $k => $v) {
+                    $changes[$k] = static::normalizeAttributeValue($v);
                 }
-
                 continue;
             }
 
-            $changes[$attribute] = $model->getAttribute($attribute);
+            $changes[$attribute] = static::normalizeAttributeValue(
+                $model->getAttribute($attribute)
+            );
         }
 
         return $changes;
     }
 
-    protected static function shouldRecordAttributeChange(Model $model, string $attribute, array $dirty, string $event): bool
+    protected static function normalizeAttributeValue(mixed $value): mixed
     {
+        if (is_null($value) || is_scalar($value)) {
+            return $value;
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+//        if (is_object($value)) {
+//            if ($value instanceof \Illuminate\Contracts\Support\Arrayable) {
+//                return $value->toArray();
+//            }
+//
+//            if ($value instanceof JsonSerializable) {
+//                return $value->jsonSerialize();
+//            }
+//
+//            return $value;
+//        }
+
+        return $value;
+    }
+
+    protected static function shouldRecordAttributeChange(
+        Model  $model,
+        string $attribute,
+        array  $dirty,
+        string $event
+    ): bool {
         if ($event === 'created') {
             return true;
         }
@@ -169,7 +196,6 @@ trait LogsAttributeChange
 
         if (Str::contains($attributeKey, '.')) {
             $relation = Str::before($attributeKey, '.');
-
             return static::relationAttributeChanged($relation, $dirty);
         }
 
@@ -197,32 +223,34 @@ trait LogsAttributeChange
         $camel = Str::camel($relation);
 
         return array_unique([
-            "{$relation}_id",
-            "{$relation}_uuid",
-            "{$relation}_type",
-            "{$snake}_id",
-            "{$snake}_uuid",
-            "{$snake}_type",
-            "{$camel}_id",
-            "{$camel}_uuid",
-            "{$camel}_type",
+            "{$relation}_id",   "{$relation}_uuid",   "{$relation}_type",
+            "{$snake}_id",      "{$snake}_uuid",      "{$snake}_type",
+            "{$camel}_id",      "{$camel}_uuid",      "{$camel}_type",
         ]);
     }
 
     protected function recordAttributeChanges(string $_event, array $changes): void
     {
         $attributeChangeLogModel = AttributeChangeLogServiceProvider::determineAttributeChangeLogModel();
-        $causer = $this->attributeChangeCauser();
+        $causer                  = $this->attributeChangeCauser();
+
 
         foreach ($changes as $attribute => $value) {
             $log = new $attributeChangeLogModel;
 
             $log->subject()->associate($this);
             $log->attribute = $attribute;
+
             $log->value = $value;
+
+//            $log->value = is_array($value) || is_object($value)
+//                ? json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+//                : $value;
+
             if ($causer) {
                 $log->causer()->associate($causer);
             }
+
             $log->created_at = $log->freshTimestamp();
             $log->save();
         }
@@ -236,15 +264,15 @@ trait LogsAttributeChange
     protected static function resolveRelatedModelAttributeValues(Model $model, string $attribute): array
     {
         $relatedModelNames = explode('.', $attribute);
-        $relatedAttribute = array_pop($relatedModelNames);
+        $relatedAttribute  = array_pop($relatedModelNames);
 
         $attributeName = [];
-        $relatedModel = $model;
+        $relatedModel  = $model;
 
         do {
-            $attributeName[] = $relatedModelName = static::resolveRelatedModelRelationName($relatedModel, array_shift($relatedModelNames));
-
-            $relatedModel = $relatedModel->$relatedModelName ?? $relatedModel->$relatedModelName();
+            $relationName    = static::resolveRelatedModelRelationName($model, array_shift($relatedModelNames));
+            $attributeName[] = $relationName;
+            $relatedModel    = $relatedModel->$relationName ?? $relatedModel->$relationName();
         } while (! empty($relatedModelNames));
 
         $attributeName[] = $relatedAttribute;
@@ -254,18 +282,16 @@ trait LogsAttributeChange
 
     protected static function resolveRelatedModelRelationName(Model $model, string $relation): string
     {
-        return Arr::first([
-            $relation,
-            Str::snake($relation),
-            Str::camel($relation),
-        ], function (string $method) use ($model): bool {
-            return method_exists($model, $method);
-        }, $relation);
+        return Arr::first(
+            [$relation, Str::snake($relation), Str::camel($relation)],
+            fn (string $method): bool => method_exists($model, $method),
+            $relation
+        );
     }
 
     protected static function resolveModelJsonAttributeValue(Model $model, string $attribute): mixed
     {
-        $path = explode('->', $attribute);
+        $path           = explode('->', $attribute);
         $modelAttribute = array_shift($path);
         $modelAttribute = collect($model->getAttribute($modelAttribute));
 
