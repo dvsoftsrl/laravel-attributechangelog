@@ -1,0 +1,12 @@
+{
+    "bootstrap-sha": "98539ad73a42214768949d4f1e73f45ad942896e",
+    "release-type": "php",
+    "include-component-in-tag": false,
+    "include-v-in-tag": false,
+    "include-v-in-release-name": false,
+    "packages": {
+        ".": {
+            "package-name": "dvsoftsrl/laravel-attributechangelog"
+        }
+    }
+}
